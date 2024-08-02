@@ -30,15 +30,15 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 cv_key = st.secrets["CV_KEY"]
 
 # Change the cv_endpoint below to your endpoint.
-cv_endpoint =st.secrets["ENDPOINT_KEY"]
+cv_endpoint = st.secrets["ENDPOINT_KEY"]
 
 openai_api_key = st.secrets["API_KEY"]
 
 # Do some basic validation
 if len(cv_key) == 32:
-    st.success("Success, COMPUTER_VISION_SUBSCRIPTION_KEY is loaded.")
+    st.success("Succès, la clé COMPUTER_VISION_SUBSCRIPTION_KEY est chargée.")
 else:
-    st.error("Error, The COMPUTER_VISION_SUBSCRIPTION_KEY is not the expected length, please check it.")
+    st.error("Erreur, la clé COMPUTER_VISION_SUBSCRIPTION_KEY n'a pas la longueur attendue, veuillez vérifier.")
 
 # Authenticate with Azure Cognitive Services
 computervision_client = None
@@ -68,12 +68,12 @@ def extract_text_from_image(image_path):
     return extracted_text
 
 # Set up the Streamlit app layout
-st.title("Student Copy Correction System")
-st.write("Upload a reference copy and student copies for automatic grading.")
+st.title("CorrAI : Système de Correction de Copies Étudiantes")
+st.write("Téléchargez une copie de référence et des copies d'étudiants pour une correction automatique.")
 
 # Input section for the reference copy
-st.header("Reference Copy")
-reference_image = st.file_uploader("Upload the reference copy as an image file:", type=["jpg", "jpeg", "png"])
+st.header("Copie de Référence")
+reference_image = st.file_uploader("Téléchargez la copie de référence sous forme de fichier image :", type=["jpg", "jpeg", "png"])
 
 reference_text = ""
 if reference_image:
@@ -82,30 +82,30 @@ if reference_image:
         reference_image_path = tmp_file.name
 
     reference_text = extract_text_from_image(reference_image_path)
-    st.text_area("Extracted Reference Copy Text", reference_text, height=200)
+    st.text_area("Texte Extrait de la Copie de Référence", reference_text, height=200)
 
 # Input section for student copies
-st.header("Student Copies")
-uploaded_files = st.file_uploader("Upload student copies as image files:", accept_multiple_files=True, type=["jpg", "jpeg", "png"])
+st.header("Copies des Étudiants")
+uploaded_files = st.file_uploader("Téléchargez les copies des étudiants sous forme de fichiers image :", accept_multiple_files=True, type=["jpg", "jpeg", "png"])
 
 # Function to calculate the grade using ChatGPT 3.5-turbo
 def grade_student_copy(reference, student, api_key):
     openai.api_key = api_key
     
     prompt = f"""
-    Reference answer:
+    Réponse de référence :
     {reference}
 
-    Student answer:
+    Réponse de l'étudiant :
     {student}
 
-    Please grade the student answer based on its precision compared to the reference answer. Provide a score between 0 and 100 and a short feedback.
+    Veuillez évaluer la réponse de l'étudiant en fonction de sa précision par rapport à la réponse de référence. Fournissez une note entre 0 et 100 et un court retour.
     """
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "You are a helpful assistant that grades student answers based on a reference answer."},
+            {"role": "system", "content": "Vous êtes un assistant utile qui évalue les réponses des étudiants en fonction d'une réponse de référence."},
             {"role": "user", "content": prompt}
         ],
         max_tokens=150,
@@ -118,13 +118,13 @@ def grade_student_copy(reference, student, api_key):
         score_line = feedback.split('\n')[0]
         score = int(''.join(filter(str.isdigit, score_line)))
     except (KeyError, IndexError, ValueError):
-        score = "Error"
-        feedback = "Error in generating the score."
+        score = "Erreur"
+        feedback = "Erreur lors de la génération de la note."
 
     return score, feedback
 
 # Processing the uploaded student copies
-if st.button("Grade Student Copies"):
+if st.button("Évaluer les Copies des Étudiants"):
     
     if reference_text and uploaded_files and openai_api_key:
         results = []
@@ -136,11 +136,11 @@ if st.button("Grade Student Copies"):
             student_text = extract_text_from_image(student_image_path)
             score, feedback = grade_student_copy(reference_text, student_text, openai_api_key)
             student_name = os.path.splitext(uploaded_file.name)[0]
-            results.append({"Number": i+1, "Student Name": student_name, "Score": score, "Feedback": feedback})
+            results.append({"Numéro": i+1, "Nom de l'Étudiant": student_name, "Note": score, "Retour": feedback})
 
         # Display the results
         df_results = pd.DataFrame(results)
-        st.header("Results")
+        st.header("Résultats")
         st.dataframe(df_results)
 
         # Function to convert DataFrame to CSV
@@ -151,7 +151,7 @@ if st.button("Grade Student Copies"):
         def convert_df_to_excel(df):
             output = BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                df.to_excel(writer, index=False, sheet_name='Results')
+                df.to_excel(writer, index=False, sheet_name='Résultats')
                 writer.close()
             processed_data = output.getvalue()
             return processed_data
@@ -159,16 +159,17 @@ if st.button("Grade Student Copies"):
         # Download results as CSV
         csv = convert_df_to_csv(df_results)
         st.download_button(
-            label="Download results as CSV",
+            label="Télécharger les résultats en format CSV",
             data=csv,
-            file_name='results.csv',
+            file_name='resultats.csv',
             mime='text/csv'
         )
 
         # Download results as Excel
         excel = convert_df_to_excel(df_results)
         b64 = base64.b64encode(excel).decode('utf-8')
-        href = f'<a href="data:application/octet-stream;base64,{b64}" download="results.xlsx">Download results as Excel</a>'
+        href = f'<a href="data:application/octet-stream;base64,{b64}" download="resultats.xlsx">Télécharger les résultats en format Excel</a>'
         st.markdown(href, unsafe_allow_html=True)
     else:
-        st.error("Please enter the reference copy, upload at least one student copy, and provide the OpenAI API key.")
+        st.error("Veuillez entrer la copie de référence, télécharger au moins une copie d'étudiant et fournir la clé API OpenAI.")
+
