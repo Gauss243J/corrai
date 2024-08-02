@@ -68,7 +68,7 @@ def extract_text_from_image(image_path):
     return extracted_text
 
 # Set up the Streamlit app layout
-st.title("CorrAI : Système de Correction de Copies Étudiantes")
+st.title("CorrAI : Système de Correction de Copies")
 st.write("Téléchargez une copie de référence et des copies d'étudiants pour une correction automatique.")
 
 # Input section for the reference copy
